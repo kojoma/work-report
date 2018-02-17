@@ -1,0 +1,41 @@
+# please see https://serverless.com/framework/docs/providers/aws/guide/serverless.yml for this yml setting.
+
+service: work-report
+
+custom:
+  dynamodb:
+    worktimeTable: work_times-${self:provider.stage}
+
+provider:
+  name: aws
+  runtime: python3.6
+  stage: dev
+  region: ap-northeast-1
+  environment:
+    dynamoDBTableName: ${self:custom.dynamodb.worktimeTable}
+
+functions:
+  record_work_time:
+    handler: handler.record_work_time
+    name: record_work_time-${self:provider.stage}
+    description: "record work time to DynamoDB"
+    memorySize: 128
+    runtime: python3.6
+    timeout: 3
+    role: arn:aws:iam::059991434768:role/lambda-role
+
+resources:
+  Resources:
+    usersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.dynamodb.worktimeTable}
+        AttributeDefinitions:
+          - AttributeName: project_name
+            AttributeType: S
+        KeySchema:
+          - AttributeName: project_name
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
